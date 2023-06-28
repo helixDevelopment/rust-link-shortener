@@ -1,22 +1,37 @@
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::{sync::Mutex, path::{Path, PathBuf}};
+use rocket::serde::json::Json;
 
 use rand::{distributions::Alphanumeric, Rng};
 
-use rocket::{State, response::Redirect};
+use rocket::{State, response::{Redirect}};
+use rocket::fs::NamedFile;
+use serde::{Serialize};
 
 
 struct Store {
     links: Mutex<HashMap<String, String>>,
 }
 
+#[derive(Serialize)]
+struct ReturnData {
+    short: String,
+}
+
 #[macro_use]
 extern crate rocket;
 
 #[get("/")]
-fn home() -> String {
-    format!("Hello world!")
+fn index() -> Redirect {
+    Redirect::permanent("/index.html")
 }
+
+#[get("/<file..>")]
+async fn build_dir(file: PathBuf) -> Option<NamedFile> {
+    println!("📁 Serving {}", Path::new("static/").join(&file).display());
+    NamedFile::open(Path::new("static/").join(file)).await.ok()
+}
+
 
 #[get("/404")]
 fn error_page() -> String {
@@ -43,7 +58,7 @@ fn get(store_db: &State<Store>, slug: &str) -> Redirect {
 }
 
 #[get("/shorten/<url>")]
-fn shorten(store_db: &State<Store>, url: &str) -> String {
+fn shorten(store_db: &State<Store>, url: &str) -> Json<ReturnData> {
     let shared_data = store_db.inner();
 
     // Generate a random slug for the url
@@ -54,17 +69,13 @@ fn shorten(store_db: &State<Store>, url: &str) -> String {
         .collect();
 
     println!("🔗 Shortening {} to {}", url, short);
-    println!("✅ New url: http://localhost:8000/get/{}", &short);
 
     // Insert the slug+url into the hashmap
-    match shared_data.links.lock().unwrap().insert(short.clone(), url.to_string()) {
-        Some(_) => {
-            format!("New url: http://localhost:8000/get/{}", short)
-        },
-        None => {
-            format!("New url: http://localhost:8000/get/{}", short)
-        },
-    }
+    shared_data.links.lock().unwrap().insert(short.clone(), url.to_string());
+    
+    Json(ReturnData {
+        short
+    })
 }
 
 #[launch]
@@ -73,5 +84,5 @@ fn rocket() -> _ {
         .manage(Store {
             links: Mutex::new(HashMap::new()),
         })
-        .mount("/", routes![home, error_page, shorten, get])
+        .mount("/", routes![index, build_dir, error_page, shorten, get])
 }

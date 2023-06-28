@@ -40,20 +40,6 @@ Make sure you have Rust and Cargo installed on your system. You can download the
 
 ## Usage
 
-### Home
-
-- Endpoint: `/`
-- Method: GET
-
-This endpoint returns a simple "Hello world!" message.
-
-### Error Page
-
-- Endpoint: `/404`
-- Method: GET
-
-This endpoint returns a "404 This page doesn't exist" message.
-
 ### Get
 
 - Endpoint: `/get/<slug>`

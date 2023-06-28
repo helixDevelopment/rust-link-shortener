@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Rust Link Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js" integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  </head>
+
+  <body class="bg-slate-200 h-[100vh] flex justify-center items-center p-2">
+	<div class="rounded-sm w-full md:max-w-[15rem] flex justify-center">
+		<div class="flex flex-row">
+			<input id="input" placeholder="your link" class="p-1 rounded-l-md"></input>
+			<button id="submit" class="bg-blue-400 px-2" onclick="shorten()">shorten</button>
+		</div>
+
+		<p>
+			https://google.com
+		</p>
+	</div>
+
+	<script>
+		const input = document.getElementById("input");
+		const button = document.getElementById("submit");
+
+		let busy = false;
+
+		async function shorten() {
+			if (busy) return;
+
+			input.setAttribute("disabled", true);
+			button.setAttribute("disabled", true);
+
+
+			let data = null;
+			
+			try {
+				data = await axios.get(`http://localhost:8000/shorten/${encodeURIComponent(input.value)}`);
+			} catch (e) {
+				
+			}
+
+			console.log("req succcess");
+			console.log(data);
+
+			input.value = "";
+			input.setAttribute("disabled", false);
+			button.setAttribute("disabled", false);
+			busy = false;
+
+			console.log(data?.data);
+		}
+	</script>
+    
+  </body>
+</html>
